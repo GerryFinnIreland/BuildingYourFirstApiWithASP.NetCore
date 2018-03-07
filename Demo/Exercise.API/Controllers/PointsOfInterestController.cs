@@ -2,23 +2,43 @@
 using System.Linq;
 using Exercise.API.Models;
 using Microsoft.AspNetCore.JsonPatch;
+using Microsoft.Extensions.Logging;
+using System;
 
 namespace Exercise.API.Controllers
 {
     [Route("api/cities")]
     public class PointsOfInterestController : Controller
     {
+        private ILogger<PointsOfInterestController> _logger;
+
+        public PointsOfInterestController(ILogger<PointsOfInterestController> logger)
+        {
+            _logger = logger; //Example of Constructor Injection. The reccomended method of dependency injection
+            //HttpContext.RequestServices.GetService(PointsOfInterestController logger);
+        }
+
         [HttpGet("{id}/pointsofinterest")] //return all points of interest
         public IActionResult GetPointsOfInterest(int id)
         {
-            var city = CitiesDataStore.Current.Cities.FirstOrDefault(c => c.Id == id);
-
-            if (city == null)
+            try
             {
-                return NotFound();
+                throw new Exception("Exception sample");
+                var city = CitiesDataStore.Current.Cities.FirstOrDefault(c => c.Id == id);
+
+                if (city == null)
+                {
+                    _logger.LogInformation($"City with id {id} wasn't found when accessing points of interest"); //Example of string interpolation new to C# 6
+                    return NotFound();
+                }
+
+                return Ok(city.PointsOfInterest);
             }
-                
-            return Ok(city.PointsOfInterest);
+            catch (Exception ex)
+            {
+                _logger.LogCritical($"Exception while getting points of interesr for city with id {id}", ex);
+                return StatusCode(500, "A problem happened while handling your request");
+            }
         }
 
         [HttpGet("{cityId}/pointsofinterest/{id}", Name = "GetPointOfInterest")]
