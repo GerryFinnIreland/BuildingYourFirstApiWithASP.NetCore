@@ -4,6 +4,7 @@ using Exercise.API.Models;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.Extensions.Logging;
 using System;
+using Exercise.API.Services;
 
 namespace Exercise.API.Controllers
 {
@@ -11,10 +12,12 @@ namespace Exercise.API.Controllers
     public class PointsOfInterestController : Controller
     {
         private ILogger<PointsOfInterestController> _logger;
+        private LocalMailService _mailService;
 
-        public PointsOfInterestController(ILogger<PointsOfInterestController> logger)
+        public PointsOfInterestController(ILogger<PointsOfInterestController> logger, LocalMailService mailService)
         {
             _logger = logger; //Example of Constructor Injection. The reccomended method of dependency injection
+            _mailService = mailService;
             //HttpContext.RequestServices.GetService(PointsOfInterestController logger);
         }
 
@@ -23,7 +26,6 @@ namespace Exercise.API.Controllers
         {
             try
             {
-                throw new Exception("Exception sample");
                 var city = CitiesDataStore.Current.Cities.FirstOrDefault(c => c.Id == id);
 
                 if (city == null)
@@ -205,6 +207,8 @@ namespace Exercise.API.Controllers
             }
 
             city.PointsOfInterest.Remove(pointOfInterestFromStore);
+
+            _mailService.Send("Point of interest deleted", $"Point of interest {pointOfInterestFromStore.Name} with id {pointOfInterestFromStore.Id} eas deleted");
 
             return NoContent(); //for updates no content is the standard.
         }
